@@ -127,7 +127,8 @@ int main(void) {
         printf("Error executing sen5x_start_measurement(): %i\n", error);
     }
 
-    for (int i = 0; i < 600; i++) {
+    //for (int i = 0; i < 600; i++) {
+    while(1) {
         // Read Measurement
         sensirion_i2c_hal_sleep_usec(1000000);
 
@@ -139,14 +140,19 @@ int main(void) {
         float ambient_temperature;
         float voc_index;
         float nox_index;
+        int16_t humidity_raw;
+        int16_t temperature_raw;
+        uint16_t voc_raw;
+        uint16_t nox_raw;
 
         error = sen5x_read_measured_values(
             &mass_concentration_pm1p0, &mass_concentration_pm2p5,
             &mass_concentration_pm4p0, &mass_concentration_pm10p0,
             &ambient_humidity, &ambient_temperature, &voc_index, &nox_index);
         if (error) {
-            printf("Error executing sen5x_read_measured_values(): %i\n", error);
+            printf("\nError executing sen5x_read_measured_values(): %i\n", error);
         } else {
+		/*
             printf("Mass concentration pm1p0: %.1f µg/m³\n",
                    mass_concentration_pm1p0);
             printf("Mass concentration pm2p5: %.1f µg/m³\n",
@@ -155,27 +161,62 @@ int main(void) {
                    mass_concentration_pm4p0);
             printf("Mass concentration pm10p0: %.1f µg/m³\n",
                    mass_concentration_pm10p0);
+		   */
+		printf("11:%d;12:%d;14:%d;1X:%d;",
+				(int)(mass_concentration_pm1p0),
+				(int)(mass_concentration_pm2p5),
+				(int)(mass_concentration_pm4p0),
+				(int)(mass_concentration_pm10p0)
+				);
             if (isnan(ambient_humidity)) {
+		    /*
                 printf("Ambient humidity: n/a\n");
+		*/
             } else {
+		    /*
                 printf("Ambient humidity: %.1f %%RH\n", ambient_humidity);
+		*/
+		printf("1h:%d;", (int)(ambient_humidity));
             }
             if (isnan(ambient_temperature)) {
+		    /*
                 printf("Ambient temperature: n/a\n");
+		*/
             } else {
+		    /*
                 printf("Ambient temperature: %.1f °C\n", ambient_temperature);
+		*/
+		printf("1t:%d;", (int)(ambient_temperature*1000.0));
             }
             if (isnan(voc_index)) {
+		    /*
                 printf("Voc index: n/a\n");
+		*/
             } else {
+		    /*
                 printf("Voc index: %.1f\n", voc_index);
+		*/
+		printf("1V:%d;", (int)(voc_index));
             }
             if (isnan(nox_index)) {
+		    /*
                 printf("Nox index: n/a\n");
+		*/
             } else {
+		    /*
                 printf("Nox index: %.1f\n", nox_index);
+		*/
+		printf("1N:%d;", (int)(nox_index));
             }
+
+        error = sen5x_read_measured_raw_values(&humidity_raw, &temperature_raw, &voc_raw, &nox_raw);
+        if (error) {
+            printf("\nError executing sen5x_read_measured_raw_values(): %i\n", error);
+        } else {
+		printf("1v:%d;", (int)(voc_raw));
         }
+		printf("\n");
+	}
     }
 
     error = sen5x_stop_measurement();
