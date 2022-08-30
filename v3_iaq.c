@@ -38,6 +38,7 @@
 #include <stdio.h>  // printf
 
 #include "sen5x_i2c.h"
+#include "scd4x_i2c.h"
 #include "sensirion_common.h"
 #include "sensirion_i2c_hal.h"
 
@@ -127,8 +128,35 @@ int main(void) {
         printf("Error executing sen5x_start_measurement(): %i\n", error);
     }
 
+    // Clean up potential SCD40 states
+    scd4x_wake_up();
+    scd4x_stop_periodic_measurement();
+    scd4x_reinit();
+
+    uint16_t serial_0;
+    uint16_t serial_1;
+    uint16_t serial_2;
+    error = scd4x_get_serial_number(&serial_0, &serial_1, &serial_2);
+    if (error) {
+        printf("Error executing scd4x_get_serial_number(): %i\n", error);
+    } else {
+        printf("serial: 0x%04x%04x%04x\n", serial_0, serial_1, serial_2);
+    }
+
+    // Start Measurement
+
+    error = scd4x_start_periodic_measurement();
+    if (error) {
+        printf("Error executing scd4x_start_periodic_measurement(): %i\n",
+               error);
+    }
+
+    printf("Waiting for first measurement... (5 sec)\n");
+
     //for (int i = 0; i < 600; i++) {
     while(1) {
+        bool data_ready_flag = false;
+
         // Read Measurement
         sensirion_i2c_hal_sleep_usec(1000000);
 
@@ -217,10 +245,33 @@ int main(void) {
         }
 		printf("\n");
 	}
+	
+        // Read Measurement if data is available
+        error = scd4x_get_data_ready_flag(&data_ready_flag);
+        if (error) {
+            printf("Error executing scd4x_get_data_ready_flag(): %i\n", error);
+            continue;
+        }
+        if (!data_ready_flag) {
+            continue;
+        }
+        uint16_t co2;
+        float temperature;
+        float humidity;
+        error = scd4x_read_measurement(&co2, &temperature, &humidity);
+        if (error) {
+            printf("Error executing scd4x_read_measurement(): %i\n", error);
+        } else if (co2 == 0) {
+            printf("Invalid sample detected, skipping.\n");
+        } else {
+		/*
+            printf("CO2: %u ppm\n", co2);
+            printf("Temperature: %.2f °C\n", temperature);
+            printf("Humidity: %.2f RH\n", humidity);
+	    */
+		printf("0c:%d;0t%d;0h%d;\n", (int)(co2), (int)(temperature*1000.0), (int)(humidity));
+        }
     }
-
-    /* SCD42 print statement */
-    /* printf("0c:%d;0t%d;0h%d;\n", (int)(co2), (int)(temperature*1000.0), (int)(humidity)); */
 
     error = sen5x_stop_measurement();
     if (error) {
