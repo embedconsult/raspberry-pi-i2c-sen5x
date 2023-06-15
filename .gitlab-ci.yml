@@ -25,6 +25,9 @@ build:
   tags: [linux, docker]
   script:
     - make
+  artifacts:
+    path:
+      - v3_iaq
 
 TODO_check:
   stage: validate

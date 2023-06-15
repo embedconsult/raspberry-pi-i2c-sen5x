@@ -269,7 +269,10 @@ int main(void) {
             printf("Temperature: %.2f °C\n", temperature);
             printf("Humidity: %.2f RH\n", humidity);
 	    */
-		printf("0c:%d;0t:%d;0h:%d;\n", (int)(co2), (int)(temperature*1000.0), (int)(humidity));
+		if(argc > 1)
+			printf("0c:%d;0t:%d;0h:%d;0n:%s;\n", (int)(co2), (int)(temperature*1000.0), (int)(humidity), argv[1]);
+		else
+			printf("0c:%d;0t:%d;0h:%d;\n", (int)(co2), (int)(temperature*1000.0), (int)(humidity));
         }
     }
 
